@@ -34,7 +34,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(client.clone()))
             .service(
                 web::scope("/api")
-                    .configure(routes::users_routes::config)  // ← внутри scope
+                    .configure(routes::users_routes::config)
+                    .configure(routes::auth_routes::config)
                 )
             })
         .bind(("127.0.0.1", 8080))?

@@ -1,16 +1,16 @@
 use crate::errors::ApiError;
 use crate::handlers::DB_NAME;
-use crate::models::UserDTO;
-use actix_web::{get, web, HttpResponse};
+use crate::models::{User, UserDTO};
+use actix_web::{get, post, web, HttpResponse};
 use futures::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::{Client, Collection};
 
-const COLL_NAME: &str = "users";
+pub const USERS_COLL_NAME: &str = "users";
 
 #[get("/users")]
 pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse,ApiError>  {
-    let collection: Collection<UserDTO> = client.database(DB_NAME).collection(COLL_NAME);
+    let collection: Collection<UserDTO> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
     let users: Vec<UserDTO> = collection
         .find(doc! {})
@@ -25,4 +25,11 @@ pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse,ApiErr
     }
 
     Ok(HttpResponse::Ok().json(users))
+}
+
+#[post("/users")]
+pub async fn add_user(client: web::Data<Client>, form: web::Json<UserDTO>) -> Result<HttpResponse,ApiError> {
+    let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
+
+    todo!()
 }
