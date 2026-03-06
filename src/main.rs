@@ -1,26 +1,43 @@
-#![allow(unused)]
+use actix_web::middleware::Logger;
+use actix_web::{web, App, HttpServer, Responder};
+use log::info;
+use mongodb::Client;
 
-use std::net::SocketAddr;
-use axum::response::Html;
-use axum::Router;
-use axum::routing::get;
+mod models;
+mod errors;
+mod routes;
+mod handlers;
 
-#[tokio::main]
-async fn main() {
-    let routes_hello = Router::new().route(
-        "/hello",
-        get(|| async { Html("Hello world! ")})
-    );
+#[rustfmt::skip]
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    unsafe {
+        std::env::set_var("RUST_LOG", "info");
+        std::env::set_var("RUST_BACKTRACE", "1");
+    }
+    env_logger::init();
 
-    // region: ---Start Server
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
-    let listener = tokio::net::TcpListener::bind(addr)
+    dotenvy::dotenv().ok();
+
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+
+    let client = Client::with_uri_str(database_url).await.expect("Failed connecting to database");
+
+    let port = 8080;
+
+    info!("Server starting on port {port}");
+
+    HttpServer::new(move || {
+        let logger = Logger::default();
+        App::new()
+            .wrap(logger)
+            .app_data(web::Data::new(client.clone()))
+            .service(
+                web::scope("/api")
+                    .configure(routes::users_routes::config)  // ← внутри scope
+                )
+            })
+        .bind(("127.0.0.1", 8080))?
+        .run()
         .await
-        .expect("Failed to bind TCP listener");
-    println!("->> Listening on http://{}", addr);
-
-    axum::serve(listener, routes_hello)
-        .await
-        .expect("Failed to run server");
-    // endregion: ---Start Server
 }
