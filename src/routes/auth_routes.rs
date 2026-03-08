@@ -6,6 +6,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             handlers::auth_handler::sign_in
         ).service(
             handlers::auth_handler::sign_up
+        ).service(
+            handlers::auth_handler::logout
         )
     );
 }

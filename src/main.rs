@@ -1,3 +1,4 @@
+use crate::utils::app_config::AppConfig;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer, Responder};
 use log::info;
@@ -7,6 +8,7 @@ mod models;
 mod errors;
 mod routes;
 mod handlers;
+mod utils;
 
 #[rustfmt::skip]
 #[actix_web::main]
@@ -19,9 +21,14 @@ async fn main() -> std::io::Result<()> {
 
     dotenvy::dotenv().ok();
 
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
+    let config = AppConfig {
+        jwt_secret: std::env::var("ACCESS_TOKEN_SECRET")
+            .expect("ACCESS_TOKEN_SECRET must be set").into_bytes(),
+        database_url: std::env::var("DATABASE_URL")
+            .expect("DATABASE_URL is not set in .env file")
+    };
 
-    let client = Client::with_uri_str(database_url).await.expect("Failed connecting to database");
+    let client = Client::with_uri_str(config.database_url.clone()).await.expect("Failed connecting to database");
 
     let port = 8080;
 
@@ -32,6 +39,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(logger)
             .app_data(web::Data::new(client.clone()))
+            .app_data(web::Data::new(config.clone()))
             .service(
                 web::scope("/api")
                     .configure(routes::users_routes::config)

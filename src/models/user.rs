@@ -9,7 +9,8 @@ pub struct Group {
 
 #[derive(Serialize, Deserialize)]
 pub struct User {
-    pub id: i32,
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+    pub id: Option<ObjectId>,
     pub username: String,
     pub email: String,
     pub password: String,

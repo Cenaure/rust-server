@@ -2,12 +2,15 @@ use crate::errors::ApiError;
 use crate::handlers::users_handler::USERS_COLL_NAME;
 use crate::handlers::DB_NAME;
 use crate::models::{User, UserDTO, UserSignIn, UserSignUp};
+use crate::utils::app_config::AppConfig;
+use crate::utils::jwt::encode_jwt;
+use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{get, post, web, HttpResponse};
 use mongodb::bson::doc;
 use mongodb::{Client, Collection};
 
 #[post("/sign-in")]
-pub async fn sign_in(client: web::Data<Client>, sign_in_dto: web::Json<UserSignIn>) -> Result<HttpResponse, ApiError> {
+pub async fn sign_in(client: web::Data<Client>, config: web::Data<AppConfig>, sign_in_dto: web::Json<UserSignIn>) -> Result<HttpResponse, ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
     let user = collection
@@ -18,23 +21,34 @@ pub async fn sign_in(client: web::Data<Client>, sign_in_dto: web::Json<UserSignI
             ]
         })
         .await
-        .map_err(|e| ApiError::InternalServer(e.to_string()))?;
+        .map_err(|e| ApiError::InternalServer(e.to_string()))?
+        .ok_or(ApiError::BadRequest("Wrong Email or Password".to_string()))?;
 
-    if user.is_none() {
-        return Err(ApiError::BadRequest("Wrong email or password".to_string()))
-    }
-
-    match bcrypt::verify(&sign_in_dto.password, &user.unwrap().password) {
+    match bcrypt::verify(&sign_in_dto.password, &user.password) {
         Ok(true) => {}
         Ok(false) => return Err(ApiError::BadRequest("Wrong email or password".to_string())),
         Err(_) => return Err(ApiError::InternalServer("bcrypt error".to_string())),
     }
 
-    todo!()
-}
+    let user_id = user.id.ok_or(ApiError::BadRequest("User does not exist".to_string()))?;
 
+    let access_token = encode_jwt(&user.username, &user.email, user_id, &config.jwt_secret)
+        .map_err(|e| ApiError::InternalServer(e.to_string()))?;;
+
+    Ok(HttpResponse::Ok()
+        .cookie(
+            Cookie::build("access_token", access_token)
+                .http_only(true)
+                .secure(true)
+                .same_site(SameSite::Strict)
+                .path("/")
+                .max_age(actix_web::cookie::time::Duration::minutes(30))
+                .finish(),
+        ).finish()
+    )
+}
 #[post("/sign-up")]
-pub async fn sign_up(client: web::Data<Client>, sign_up_dto: web::Json<UserSignUp>) -> Result<HttpResponse, ApiError> {
+pub async fn sign_up(client: web::Data<Client>, config: web::Data<AppConfig>, sign_up_dto: web::Json<UserSignUp>) -> Result<HttpResponse, ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
     let existing_user: Option<User> = collection
@@ -52,7 +66,7 @@ pub async fn sign_up(client: web::Data<Client>, sign_up_dto: web::Json<UserSignU
     }
 
     let new_user = User {
-        id: 0,  // MongoDB сам назначит _id, это поле можно убрать
+        id: None,
         username: sign_up_dto.username.clone(),
         email: sign_up_dto.email.clone(),
         password: bcrypt::hash(&sign_up_dto.password, 12)
@@ -61,21 +75,47 @@ pub async fn sign_up(client: web::Data<Client>, sign_up_dto: web::Json<UserSignU
         last_login: None,
     };
 
-    collection
+    let insert_result = collection
         .insert_one(&new_user)
         .await
         .map_err(|e| ApiError::InternalServer(e.to_string()))?;
 
-    Ok(HttpResponse::Created().json(UserDTO {
-        id: None,
-        username: new_user.username,
-        email: new_user.email,
-        groups: new_user.groups,
-        last_login: new_user.last_login,
-    }))
+    let inserted_id = insert_result
+        .inserted_id
+        .as_object_id()
+        .ok_or(ApiError::InternalServer("Failed to get inserted id".to_string()))?;
+
+    let access_token = encode_jwt(&new_user.username, &new_user.email, inserted_id, &config.jwt_secret)
+        .map_err(|e| ApiError::InternalServer(e.to_string()))?;;
+
+    Ok(HttpResponse::Created()
+        .cookie(
+            Cookie::build("access_token", access_token)
+                .http_only(true)
+                .secure(true)
+                .same_site(SameSite::Strict)
+                .path("/")
+                .max_age(actix_web::cookie::time::Duration::minutes(30))
+                .finish(),
+        )
+        .json(UserDTO {
+            id: None,
+            username: new_user.username,
+            email: new_user.email,
+            groups: new_user.groups,
+            last_login: new_user.last_login,
+        })
+    )
 }
 
 #[get("/logout")]
-pub async fn logout(client: web::Data<Client>) -> Result<HttpResponse, ApiError> {
-    todo!()
+pub async fn logout() -> Result<HttpResponse, ApiError> {
+    Ok(HttpResponse::Ok()
+        .cookie(Cookie::build("access_token", "")
+            .path("/")
+            .max_age(time::Duration::ZERO)
+            .finish()
+        )
+        .finish()
+    )
 }
