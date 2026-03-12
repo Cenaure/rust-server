@@ -2,6 +2,7 @@ use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
+#[derive(Clone)]
 pub struct Group {
     pub name: String,
     pub permissions: Vec<String>
@@ -43,3 +44,12 @@ pub struct UserSignUp {
     pub password: String,
 }
 //endregion: ---Auth
+
+//region: ---Users Handler
+#[derive(Deserialize)]
+pub struct UserCreate {
+    pub username: String,
+    pub password: String,
+    pub email: String,
+    pub groups: Option<Vec<Group>>,
+}
