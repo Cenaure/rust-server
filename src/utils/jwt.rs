@@ -1,7 +1,7 @@
+use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use time::OffsetDateTime;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -18,12 +18,12 @@ pub fn encode_jwt(
     id: ObjectId,
     secret: &[u8],
 ) -> Result<String, jsonwebtoken::errors::Error> {
-    let now = OffsetDateTime::now_utc();
-    let exp = now + time::Duration::minutes(30);
+    let now = Utc::now();
+    let exp = Duration::minutes(15);
 
     let claims = Claims {
-        iat: now.unix_timestamp() as usize,
-        exp: exp.unix_timestamp() as usize,
+        iat: now.timestamp() as usize,
+        exp: (now + exp).timestamp() as usize,
         username: username.to_owned(),
         email: email.to_owned(),
         id: id.to_string(),
