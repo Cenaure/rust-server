@@ -1,12 +1,6 @@
+use crate::models::Group;
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-#[derive(Clone)]
-pub struct Group {
-    pub name: String,
-    pub permissions: Vec<String>
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct User {
@@ -19,7 +13,7 @@ pub struct User {
     pub last_login: Option<String>
 }
 
-// Return Dto
+// User which returns to the client
 #[derive(Deserialize, Serialize)]
 pub struct UserDTO {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -53,3 +47,12 @@ pub struct UserCreate {
     pub email: String,
     pub groups: Option<Vec<Group>>,
 }
+
+#[derive(Deserialize)]
+pub struct UserUpdate {
+    pub username: Option<String>,
+    pub password: Option<String>,
+    pub email: Option<String>,
+    pub groups: Option<Vec<Group>>,
+}
+//endregion: ---Users Handler

@@ -43,6 +43,8 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .configure(routes::users_routes::config)
+                    .configure(routes::groups_routes::config)
+
                     .configure(routes::auth_routes::config)
                 )
             })
