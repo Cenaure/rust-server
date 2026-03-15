@@ -7,5 +7,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(web::scope("/groups")
         .wrap(from_fn(auth_middleware))
         .service(handlers::groups_handler::list_groups)
+        .service(handlers::groups_handler::add_group)
+        .service(handlers::groups_handler::patch_group)
+        .service(handlers::groups_handler::delete_group)
+        .service(handlers::groups_handler::get_group)
     );
 }

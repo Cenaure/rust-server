@@ -1,7 +1,7 @@
 use crate::errors::ApiError;
 use crate::handlers::DB_NAME;
 use crate::models::{User, UserCreate, UserDTO, UserUpdate};
-use actix_web::{delete, get, patch, post, web, HttpResponse};
+use actix_web::{web, HttpResponse};
 use futures::TryStreamExt;
 use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{doc, to_bson, Document};
@@ -10,7 +10,6 @@ use mongodb::{Client, Collection};
 
 pub const USERS_COLL_NAME: &str = "users";
 
-#[get("/")]
 pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse,ApiError>  {
     let collection: Collection<UserDTO> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
@@ -25,7 +24,6 @@ pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse,ApiErr
     Ok(HttpResponse::Ok().json(users))
 }
 
-#[post("/")]
 pub async fn add_user(client: web::Data<Client>, user_dto: web::Json<UserCreate>) -> Result<HttpResponse,ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
@@ -60,7 +58,6 @@ pub async fn add_user(client: web::Data<Client>, user_dto: web::Json<UserCreate>
     )
 }
 
-#[get("/{id}")]
 pub async fn get_user(path: web::Path<String>, client: web::Data<Client>) -> Result<HttpResponse,ApiError>  {
     let collection: Collection<UserDTO> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
@@ -79,7 +76,6 @@ pub async fn get_user(path: web::Path<String>, client: web::Data<Client>) -> Res
     Ok(HttpResponse::Ok().json(user))
 }
 
-#[patch("/{id}")]
 pub async fn patch_user(path: web::Path<String>, client: web::Data<Client>, user_dto: web::Json<UserUpdate>) -> Result<HttpResponse,ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
@@ -124,7 +120,6 @@ pub async fn patch_user(path: web::Path<String>, client: web::Data<Client>, user
     }))
 }
 
-#[delete("/{id}")]
 pub async fn delete_user(path: web::Path<String>, client: web::Data<Client>) -> Result<HttpResponse,ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
