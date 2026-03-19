@@ -26,15 +26,18 @@ pub async fn require_permissions(
         .ok_or_else(|| ApiError::InternalServer("DB client not found".to_string()))?;
 
     let token = req
-        .headers()
-        .get("AUTHORIZATION")
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.strip_prefix("Bearer "))
-        .ok_or_else(|| {
-            ApiError::Unauthorized("Invalid or missing Authorization header".to_string())
-        })?;
+        .cookie("access_token")
+        .map(|c| c.value().to_string())
+        .or_else(|| {
+            req.headers()
+                .get("AUTHORIZATION")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.strip_prefix("Bearer "))
+                .map(|v| v.to_string())
+        })
+        .ok_or_else(|| ApiError::Unauthorized("Missing token".to_string()))?;
 
-    let claims = decode_jwt(token, &config.jwt_secret)
+    let claims = decode_jwt(&token, &config.jwt_secret)
         .map_err(|_| ApiError::Unauthorized("Invalid token".to_string()))?;
 
     let user_id = ObjectId::parse_str(&claims.claims.sub)

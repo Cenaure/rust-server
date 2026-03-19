@@ -1,13 +1,14 @@
 use crate::utils::app_config::AppConfig;
+use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer, Responder};
 use log::info;
 use mongodb::Client;
 
-mod models;
 mod errors;
-mod routes;
 mod handlers;
+mod models;
+mod routes;
 mod utils;
 
 #[rustfmt::skip]
@@ -36,18 +37,24 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let logger = Logger::default();
+
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:4200")
+            .allowed_methods(vec!["GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"])
+            .allow_any_header()
+            .supports_credentials();
+
         App::new()
-            .wrap(logger)
             .app_data(web::Data::new(client.clone()))
             .app_data(web::Data::new(config.clone()))
             .service(
                 web::scope("/api")
+                    .wrap(cors)
                     .configure(routes::users_routes::config)
                     .configure(routes::groups_routes::config)
-
-                    .configure(routes::auth_routes::config)
-                )
-            })
+                    .configure(routes::auth_routes::config))
+            .wrap(logger)
+        })
         .bind(("127.0.0.1", 8080))?
         .run()
         .await

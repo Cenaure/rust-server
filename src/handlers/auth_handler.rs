@@ -6,7 +6,8 @@ use crate::utils::app_config::AppConfig;
 use crate::utils::jwt::encode_jwt;
 use actix_web::cookie::{Cookie, SameSite};
 use actix_web::{get, post, web, HttpResponse};
-use mongodb::bson::doc;
+use chrono::Utc;
+use mongodb::bson::{doc, DateTime};
 use mongodb::{Client, Collection};
 
 #[post("/sign-in")]
@@ -34,6 +35,11 @@ pub async fn sign_in(client: web::Data<Client>, config: web::Data<AppConfig>, si
 
     let access_token = encode_jwt(&user.username, &user.email, user_id, &config.jwt_secret)
         .map_err(|e| ApiError::InternalServer(e.to_string()))?;;
+
+    collection
+        .find_one_and_update(doc! {"_id": user_id}, doc! {"$set": {"last_login": DateTime::from_millis(Utc::now().timestamp_millis())}})
+        .await
+        .map_err(|e| ApiError::InternalServer(e.to_string()))?;
 
     Ok(HttpResponse::Ok()
         .cookie(

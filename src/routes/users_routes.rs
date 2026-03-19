@@ -31,14 +31,6 @@ pub fn config(cfg: &mut web::ServiceConfig) {
             .service(
                 web::resource("/{id}")
                     .route(
-                        web::get()
-                            .to(handlers::users_handler::get_user)
-                            .wrap(from_fn(require_list_users)),
-                    )
-            )
-            .service(
-                web::resource("/{id}")
-                    .route(
                         web::patch()
                             .to(handlers::users_handler::patch_user)
                             .wrap(from_fn(require_patch_user)),
@@ -47,6 +39,11 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                         web::delete()
                             .to(handlers::users_handler::delete_user)
                             .wrap(from_fn(require_delete_user)),
+                    )
+                    .route(
+                        web::get()
+                            .to(handlers::users_handler::get_user)
+                            .wrap(from_fn(require_list_users)),
                     ),
             ),
     );

@@ -51,6 +51,8 @@ impl error::ResponseError for ApiError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(self.status_code())
             .insert_header(ContentType::json())
+            .insert_header(("Access-Control-Allow-Origin", "http://localhost:4200"))
+            .insert_header(("Access-Control-Allow-Credentials", "true"))
             .json(ErrorBody { error: self.to_string() })
     }
 }

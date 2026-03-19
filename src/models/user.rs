@@ -1,5 +1,6 @@
 use crate::models::Group;
 use mongodb::bson::oid::ObjectId;
+use mongodb::bson::DateTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -10,7 +11,7 @@ pub struct User {
     pub email: String,
     pub password: String,
     pub groups: Vec<Group>,
-    pub last_login: Option<String>
+    pub last_login: Option<DateTime>
 }
 
 // User which returns to the client
@@ -21,7 +22,7 @@ pub struct UserDTO {
     pub username: String,
     pub email: String,
     pub groups: Vec<Group>,
-    pub last_login: Option<String>
+    pub last_login: Option<DateTime>
 }
 
 //region: ---Auth
