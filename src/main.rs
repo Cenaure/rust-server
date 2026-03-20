@@ -10,6 +10,7 @@ mod handlers;
 mod models;
 mod routes;
 mod utils;
+pub mod jikan_integration;
 
 #[rustfmt::skip]
 #[actix_web::main]
@@ -55,7 +56,7 @@ async fn main() -> std::io::Result<()> {
                     .configure(routes::auth_routes::config))
             .wrap(logger)
         })
-        .bind(("127.0.0.1", 8081))?
+        .bind(("127.0.0.1", port))?
         .run()
         .await
 }
