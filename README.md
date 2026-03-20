@@ -25,4 +25,4 @@ cargo run
 ```
 
 ### Environment Variables
-See [.env.example](https://github.com/anilibria/docs)
+See [.env.example](https://github.com/Cenaure/rust-server/blob/main/.env.example)

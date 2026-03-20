@@ -1,7 +1,7 @@
 use crate::errors::ApiError;
 use crate::handlers::DB_NAME;
 use crate::models::{Group, GroupCreate, GroupDTO, GroupUpdate};
-use actix_web::{delete, get, patch, post, web, HttpResponse};
+use actix_web::{web, HttpResponse};
 use futures::TryStreamExt;
 use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{doc, to_bson, Document};
@@ -10,7 +10,6 @@ use mongodb::{Client, Collection};
 
 pub const GROUPS_COLL_NAME: &str = "groups";
 
-#[get("/")]
 pub async fn list_groups(client: web::Data<Client>) -> Result<HttpResponse, ApiError> {
     let collection: Collection<GroupDTO> = client.database(DB_NAME).collection(GROUPS_COLL_NAME);
 
@@ -25,7 +24,6 @@ pub async fn list_groups(client: web::Data<Client>) -> Result<HttpResponse, ApiE
     Ok(HttpResponse::Ok().json(groups))
 }
 
-#[get("/{id}")]
 pub async fn get_group(
     path: web::Path<String>,
     client: web::Data<Client>,
@@ -44,7 +42,6 @@ pub async fn get_group(
     Ok(HttpResponse::Ok().json(group))
 }
 
-#[post("/")]
 pub async fn add_group(
     client: web::Data<Client>,
     group_dto: web::Json<GroupCreate>,
@@ -74,7 +71,6 @@ pub async fn add_group(
     }))
 }
 
-#[patch("/{id}")]
 pub async fn patch_group(
     path: web::Path<String>,
     client: web::Data<Client>,
@@ -115,7 +111,6 @@ pub async fn patch_group(
     }))
 }
 
-#[delete("/{id}")]
 pub async fn delete_group(
     path: web::Path<String>,
     client: web::Data<Client>,

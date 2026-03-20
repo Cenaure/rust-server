@@ -31,7 +31,7 @@ async fn main() -> std::io::Result<()> {
 
     let client = Client::with_uri_str(config.database_url.clone()).await.expect("Failed connecting to database");
 
-    let port = 8080;
+    let port = 8081;
 
     info!("Server starting on port {port}");
 
@@ -55,7 +55,7 @@ async fn main() -> std::io::Result<()> {
                     .configure(routes::auth_routes::config))
             .wrap(logger)
         })
-        .bind(("127.0.0.1", 8080))?
+        .bind(("127.0.0.1", 8081))?
         .run()
         .await
 }
