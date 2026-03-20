@@ -1,4 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 // Pagination
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Pagination {
     pub last_visible_page: i32,
     pub has_next_page: bool,
@@ -6,6 +9,7 @@ pub struct Pagination {
     pub items: PaginationItems
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PaginationItems {
     pub count: i32,
     pub total: i32,
@@ -14,6 +18,7 @@ pub struct PaginationItems {
 
 
 // Common MAL response
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CommonMalResponse {
     pub mal_id: u32,
     pub r#type: String,

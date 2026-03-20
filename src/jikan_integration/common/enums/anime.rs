@@ -1,4 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 // Anime Type
+#[derive(Serialize, Deserialize)]
 pub enum AnimeType {
     TV,
     MOVIE,
@@ -29,6 +32,7 @@ impl AnimeType {
 
 
 // Anime Status
+#[derive(Serialize, Deserialize)]
 pub enum AnimeStatus {
     AIRING,
     COMPLETE,
@@ -47,6 +51,7 @@ impl AnimeStatus {
 
 
 // Anime Filter
+#[derive(Serialize, Deserialize)]
 pub enum AnimeFilter {
     AIRING,
     UPCOMING,
@@ -67,6 +72,7 @@ impl AnimeFilter {
 
 
 // Anime Rating
+#[derive(Serialize, Deserialize)]
 pub enum AnimeRating {
     G,
     PG,

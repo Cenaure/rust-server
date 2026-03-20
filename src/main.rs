@@ -27,7 +27,11 @@ async fn main() -> std::io::Result<()> {
         jwt_secret: std::env::var("ACCESS_TOKEN_SECRET")
             .expect("ACCESS_TOKEN_SECRET must be set").into_bytes(),
         database_url: std::env::var("DATABASE_URL")
-            .expect("DATABASE_URL is not set in .env file")
+            .expect("DATABASE_URL is not set in .env file"),
+        jikan_api_url: std::env::var("JIKAN_API_URL")
+            .expect("Jikan Api Url is not set in .env file"),
+        // Client for fetching data from jikan
+        http_client: reqwest::Client::new(),
     };
 
     let client = Client::with_uri_str(config.database_url.clone()).await.expect("Failed connecting to database");
@@ -53,7 +57,8 @@ async fn main() -> std::io::Result<()> {
                     .wrap(cors)
                     .configure(routes::users_routes::config)
                     .configure(routes::groups_routes::config)
-                    .configure(routes::auth_routes::config))
+                    .configure(routes::auth_routes::config)
+                    .configure(routes::anime_routes::config))
             .wrap(logger)
         })
         .bind(("127.0.0.1", port))?

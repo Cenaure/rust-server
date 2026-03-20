@@ -28,6 +28,12 @@ pub enum ApiError {
 
     #[display("validation error: {_0}")]
     ValidationError(String),
+
+    #[display("bad gateway: {_0}")]
+    BadGateway(String),
+
+    #[display("too many requests: {_0}")]
+    TooManyRequests(String),
 }
 //endregion: ---API Errors
 
@@ -46,6 +52,8 @@ impl error::ResponseError for ApiError {
             ApiError::Forbidden(_) => StatusCode::FORBIDDEN,
             ApiError::TokenExpired => StatusCode::UNAUTHORIZED,
             ApiError::ValidationError(_) => StatusCode::BAD_REQUEST,
+            ApiError::BadGateway(_) => StatusCode::BAD_GATEWAY,
+            ApiError::TooManyRequests(_) => StatusCode::TOO_MANY_REQUESTS,
         }
     }
     fn error_response(&self) -> HttpResponse {

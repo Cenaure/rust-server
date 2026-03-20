@@ -1,18 +1,20 @@
 use crate::jikan_integration::common::structs::common::CommonMalResponse;
+use serde::{Deserialize, Serialize};
 
 // Anime Struct, only needed fields
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AnimeStruct {
     pub mal_id: u32,
-    pub url: String,
-    pub images: AnimeImages,
-    pub trailer: AnimeTrailer,
+    pub url: Option<String>,
+    pub images: Option<AnimeImages>,
+    pub trailer: Option<AnimeTrailer>,
     //pub approved
-    pub titles: Vec<AnimeTitles>,
+    pub titles: Option<Vec<AnimeTitles>>,
     pub r#type: Option<String>,
     //pub source
-    pub episodes: u32,
+    pub episodes: Option<u32>,
     pub status: Option<String>,
-    pub airing: bool,
+    pub airing: Option<bool>,
     //pub aired
     //pub duration
     pub rating: Option<String>,
@@ -26,7 +28,7 @@ pub struct AnimeStruct {
     //pub members
     //pub favourites
 
-    pub synipsis: Option<String>,
+    pub synopsis: Option<String>,
     pub background: Option<String>,
     //pub season
     pub year: Option<u16>,
@@ -40,22 +42,26 @@ pub struct AnimeStruct {
     //pub demographics
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AnimeImages {
     pub webp: WebpImage
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct WebpImage {
     pub image_url: Option<String>,
     pub small_image_url: Option<String>,
     pub large_image_url: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AnimeTrailer {
     pub youtube_id: Option<String>,
     pub url: Option<String>,
     pub embed_url: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AnimeTitles {
     pub r#type: String,
     pub title: String,
