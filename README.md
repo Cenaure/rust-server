@@ -2,6 +2,8 @@
 ![Rust](https://img.shields.io/badge/rust-1.94.0-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
+This server is built especially for my study project - [Anidream](https://github.com/Cenaure/anidream)
+
 A REST API built with Actix-web featuring JWT authentication
 and role-based permissions management.
 
