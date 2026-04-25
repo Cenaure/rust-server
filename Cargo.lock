@@ -2327,6 +2327,7 @@ dependencies = [
  "mongodb",
  "reqwest",
  "serde",
+ "serde_json",
  "time",
  "utoipa",
  "utoipa-actix-web",

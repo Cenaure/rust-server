@@ -1,13 +1,13 @@
-use crate::jikan_integration::common::structs::common::CommonMalResponse;
+use crate::jikan_integration::common::structs::common::{CommonMalResponse, Images, Pagination};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-// Anime Struct, only needed fields
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+// Anime Struct only needed fields
+#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
 pub struct AnimeStruct {
     pub mal_id: u32,
     pub url: Option<String>,
-    pub images: Option<AnimeImages>,
+    pub images: Option<Images>,
     pub trailer: Option<AnimeTrailer>,
     //pub approved
     pub titles: Option<Vec<AnimeTitles>>,
@@ -43,27 +43,20 @@ pub struct AnimeStruct {
     //pub demographics
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct AnimeImages {
-    pub webp: WebpImage
-}
-
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct WebpImage {
-    pub image_url: Option<String>,
-    pub small_image_url: Option<String>,
-    pub large_image_url: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
 pub struct AnimeTrailer {
     pub youtube_id: Option<String>,
     pub url: Option<String>,
     pub embed_url: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
 pub struct AnimeTitles {
     pub r#type: String,
     pub title: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
+pub struct AnimeByIdResponse {
+    pub data: AnimeStruct,
 }

@@ -34,6 +34,9 @@ pub enum ApiError {
 
     #[display("too many requests: {_0}")]
     TooManyRequests(String),
+
+    #[display("conflict: {_0}")]
+    Conflict(String),
 }
 //endregion: ---API Errors
 
@@ -54,6 +57,7 @@ impl error::ResponseError for ApiError {
             ApiError::ValidationError(_) => StatusCode::BAD_REQUEST,
             ApiError::BadGateway(_) => StatusCode::BAD_GATEWAY,
             ApiError::TooManyRequests(_) => StatusCode::TOO_MANY_REQUESTS,
+            ApiError::Conflict(_) => StatusCode::CONFLICT,
         }
     }
     fn error_response(&self) -> HttpResponse {

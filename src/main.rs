@@ -7,7 +7,6 @@ use mongodb::Client;
 use utoipa_swagger_ui::SwaggerUi;
 
 use utoipa::OpenApi;
-use utoipa_actix_web::AppExt;
 
 mod errors;
 mod handlers;
