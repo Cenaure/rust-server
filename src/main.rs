@@ -1,9 +1,13 @@
 use crate::utils::app_config::AppConfig;
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::{web, App, HttpServer, Responder};
+use actix_web::{web, App, HttpServer};
 use log::info;
 use mongodb::Client;
+use utoipa_swagger_ui::SwaggerUi;
+
+use utoipa::OpenApi;
+use utoipa_actix_web::AppExt;
 
 mod errors;
 mod handlers;
@@ -11,6 +15,7 @@ mod models;
 mod routes;
 mod utils;
 pub mod jikan_integration;
+mod openapi;
 
 #[rustfmt::skip]
 #[actix_web::main]
@@ -23,6 +28,7 @@ async fn main() -> std::io::Result<()> {
 
     dotenvy::dotenv().ok();
 
+    // Extracting config from .env file
     let config = AppConfig {
         jwt_secret: std::env::var("ACCESS_TOKEN_SECRET")
             .expect("ACCESS_TOKEN_SECRET must be set").into_bytes(),
@@ -36,7 +42,7 @@ async fn main() -> std::io::Result<()> {
 
     let client = Client::with_uri_str(config.database_url.clone()).await.expect("Failed connecting to database");
 
-    let port = 8081;
+    let port = 8080;
 
     info!("Server starting on port {port}");
 
@@ -52,6 +58,10 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(client.clone()))
             .app_data(web::Data::new(config.clone()))
+            .service(
+                SwaggerUi::new("/swagger-ui/{_:.*}")
+                    .url("/api-docs/openapi.json", openapi::ApiDoc::openapi()),
+            )
             .service(
                 web::scope("/api")
                     .wrap(cors)

@@ -1,9 +1,10 @@
 use crate::jikan_integration::common::structs::anime::AnimeStruct;
 use crate::jikan_integration::common::structs::common::Pagination;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct AnimeTopJikanResponse {
-    pagination: Pagination,
-    data: Vec<AnimeStruct>,
+    pub pagination: Pagination,
+    pub data: Vec<AnimeStruct>,
 }

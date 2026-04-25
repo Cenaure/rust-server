@@ -10,6 +10,17 @@ use chrono::Utc;
 use mongodb::bson::{doc, DateTime};
 use mongodb::{Client, Collection};
 
+#[utoipa::path(
+    post,
+    path = "/api/auth/sign-in",
+    tag = "Auth",
+    request_body = UserSignIn,
+    responses(
+        (status = 200, description = "Signed in successfully"),
+        (status = 400, description = "Wrong email or password"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 #[post("/sign-in")]
 pub async fn sign_in(client: web::Data<Client>, config: web::Data<AppConfig>, sign_in_dto: web::Json<UserSignIn>) -> Result<HttpResponse, ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
@@ -53,6 +64,17 @@ pub async fn sign_in(client: web::Data<Client>, config: web::Data<AppConfig>, si
         ).finish()
     )
 }
+#[utoipa::path(
+    post,
+    path = "/api/auth/sign-up",
+    tag = "Auth",
+    request_body = UserSignUp,
+    responses(
+        (status = 201, description = "User created", body = UserDTO),
+        (status = 400, description = "User already exists"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 #[post("/sign-up")]
 pub async fn sign_up(client: web::Data<Client>, config: web::Data<AppConfig>, sign_up_dto: web::Json<UserSignUp>) -> Result<HttpResponse, ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
@@ -114,6 +136,14 @@ pub async fn sign_up(client: web::Data<Client>, config: web::Data<AppConfig>, si
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/auth/logout",
+    tag = "Auth",
+    responses(
+        (status = 200, description = "Logged out")
+    )
+)]
 #[get("/logout")]
 pub async fn logout() -> Result<HttpResponse, ApiError> {
     Ok(HttpResponse::Ok()

@@ -10,6 +10,15 @@ use mongodb::{Client, Collection};
 
 pub const GROUPS_COLL_NAME: &str = "groups";
 
+#[utoipa::path(
+    get,
+    path = "/api/groups/",
+    tag = "Groups",
+    responses(
+        (status = 200, description = "List groups", body = [GroupDTO]),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_groups(client: web::Data<Client>) -> Result<HttpResponse, ApiError> {
     let collection: Collection<GroupDTO> = client.database(DB_NAME).collection(GROUPS_COLL_NAME);
 
@@ -24,6 +33,19 @@ pub async fn list_groups(client: web::Data<Client>) -> Result<HttpResponse, ApiE
     Ok(HttpResponse::Ok().json(groups))
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/groups/{id}",
+    tag = "Groups",
+    params(
+        ("id" = String, Path, description = "Group id")
+    ),
+    responses(
+        (status = 200, description = "Group details", body = GroupDTO),
+        (status = 400, description = "Invalid group id"),
+        (status = 404, description = "Group not found")
+    )
+)]
 pub async fn get_group(
     path: web::Path<String>,
     client: web::Data<Client>,
@@ -42,6 +64,16 @@ pub async fn get_group(
     Ok(HttpResponse::Ok().json(group))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/groups/",
+    tag = "Groups",
+    request_body = GroupCreate,
+    responses(
+        (status = 201, description = "Group created", body = GroupDTO),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn add_group(
     client: web::Data<Client>,
     group_dto: web::Json<GroupCreate>,
@@ -71,6 +103,20 @@ pub async fn add_group(
     }))
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/groups/{id}",
+    tag = "Groups",
+    request_body = GroupUpdate,
+    params(
+        ("id" = String, Path, description = "Group id")
+    ),
+    responses(
+        (status = 200, description = "Updated group", body = GroupDTO),
+        (status = 400, description = "Invalid input"),
+        (status = 404, description = "Group not found")
+    )
+)]
 pub async fn patch_group(
     path: web::Path<String>,
     client: web::Data<Client>,
@@ -111,6 +157,19 @@ pub async fn patch_group(
     }))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/groups/{id}",
+    tag = "Groups",
+    params(
+        ("id" = String, Path, description = "Group id")
+    ),
+    responses(
+        (status = 204, description = "Group deleted"),
+        (status = 400, description = "Invalid group id"),
+        (status = 404, description = "Group not found")
+    )
+)]
 pub async fn delete_group(
     path: web::Path<String>,
     client: web::Data<Client>,

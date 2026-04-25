@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 // Anime Type
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub enum AnimeType {
     TV,
     MOVIE,
@@ -32,7 +33,7 @@ impl AnimeType {
 
 
 // Anime Status
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub enum AnimeStatus {
     AIRING,
     COMPLETE,
@@ -51,7 +52,7 @@ impl AnimeStatus {
 
 
 // Anime Filter
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub enum AnimeFilter {
     AIRING,
     UPCOMING,
@@ -72,7 +73,7 @@ impl AnimeFilter {
 
 
 // Anime Rating
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, ToSchema)]
 pub enum AnimeRating {
     G,
     PG,

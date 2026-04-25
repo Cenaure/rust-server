@@ -19,4 +19,9 @@ time = "0.3.47"
 chrono = "0.4.44"
 actix-cors = "0.7.1"
 
+# docs
+utoipa = { version = "5.4.0", features = ["actix_extras"] }
+utoipa-actix-web = "0.1.2"
+utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web"] }
+
 [dev-dependencies]

@@ -10,6 +10,15 @@ use mongodb::{Client, Collection};
 
 pub const USERS_COLL_NAME: &str = "users";
 
+#[utoipa::path(
+    get,
+    path = "/api/users/",
+    tag = "Users",
+    responses(
+        (status = 200, description = "List users", body = [UserDTO]),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse,ApiError>  {
     let collection: Collection<UserDTO> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
@@ -24,6 +33,16 @@ pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse,ApiErr
     Ok(HttpResponse::Ok().json(users))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/users/",
+    tag = "Users",
+    request_body = UserCreate,
+    responses(
+        (status = 201, description = "User created", body = UserDTO),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn add_user(client: web::Data<Client>, user_dto: web::Json<UserCreate>) -> Result<HttpResponse,ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
@@ -58,6 +77,19 @@ pub async fn add_user(client: web::Data<Client>, user_dto: web::Json<UserCreate>
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/api/users/{id}",
+    tag = "Users",
+    params(
+        ("id" = String, Path, description = "User id")
+    ),
+    responses(
+        (status = 200, description = "User details", body = UserDTO),
+        (status = 400, description = "Invalid user ID"),
+        (status = 404, description = "User not found")
+    )
+)]
 pub async fn get_user(path: web::Path<String>, client: web::Data<Client>) -> Result<HttpResponse,ApiError>  {
     let collection: Collection<UserDTO> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
@@ -76,6 +108,20 @@ pub async fn get_user(path: web::Path<String>, client: web::Data<Client>) -> Res
     Ok(HttpResponse::Ok().json(user))
 }
 
+#[utoipa::path(
+    patch,
+    path = "/api/users/{id}",
+    tag = "Users",
+    request_body = UserUpdate,
+    params(
+        ("id" = String, Path, description = "User id")
+    ),
+    responses(
+        (status = 200, description = "Updated user", body = UserDTO),
+        (status = 400, description = "Invalid input"),
+        (status = 404, description = "User not found")
+    )
+)]
 pub async fn patch_user(path: web::Path<String>, client: web::Data<Client>, user_dto: web::Json<UserUpdate>) -> Result<HttpResponse,ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
@@ -120,6 +166,19 @@ pub async fn patch_user(path: web::Path<String>, client: web::Data<Client>, user
     }))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/users/{id}",
+    tag = "Users",
+    params(
+        ("id" = String, Path, description = "User id")
+    ),
+    responses(
+        (status = 204, description = "User deleted"),
+        (status = 400, description = "Invalid user id"),
+        (status = 404, description = "User not found")
+    )
+)]
 pub async fn delete_user(path: web::Path<String>, client: web::Data<Client>) -> Result<HttpResponse,ApiError> {
     let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 

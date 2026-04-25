@@ -8,7 +8,7 @@ and role-based permissions management.
 ## Features
 - **Users** - registration, JWT login, account management
 - **Groups** - role assignment and permissions control
-- **Anime** - proxy to the [AniLiberty API V1](https://anilibria.top/api/docs/v1)
+- **Anime** - proxy to the [Jikan API](https://jikan.moe/)
 
 ## Getting Started
 
