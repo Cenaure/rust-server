@@ -60,3 +60,9 @@ pub struct AnimeTitles {
 pub struct AnimeByIdResponse {
     pub data: AnimeStruct,
 }
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+pub struct AnimeSearchResponse {
+    pub pagination: Pagination,
+    pub data: Vec<AnimeStruct>,
+}

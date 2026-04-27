@@ -58,3 +58,8 @@ pub struct UpdateAnimeRequest {
     pub studios: Option<Vec<CommonMalResponse>>,
     pub producers: Option<Vec<CommonMalResponse>>,
 }
+
+#[derive(Deserialize)]
+pub struct AnimeSearchParams {
+    pub q: String,
+}

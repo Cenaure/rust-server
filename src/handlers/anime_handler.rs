@@ -3,16 +3,17 @@ use crate::jikan_integration::common::structs::random::AnimeRandomJikanResponse;
 use crate::jikan_integration::common::structs::top::AnimeTopJikanResponse;
 use crate::jikan_integration::endpoints::random::get_random_anime;
 use crate::jikan_integration::endpoints::top::get_top_anime;
-use crate::models::{CreateAnimeRequest, TopAnimeParams, UpdateAnimeRequest};
+use crate::models::{AnimeSearchParams, CreateAnimeRequest, TopAnimeParams, UpdateAnimeRequest};
 use crate::utils::app_config::AppConfig;
 use actix_web::{get, post, put, web, HttpResponse};
 use futures::TryStreamExt;
 use mongodb::{Client, Collection};
 use mongodb::bson::doc;
+use utoipa::openapi::Info;
 use crate::handlers::DB_NAME;
-use crate::jikan_integration::common::structs::anime::{AnimeByIdResponse, AnimeStruct};
+use crate::jikan_integration::common::structs::anime::{AnimeByIdResponse, AnimeSearchResponse, AnimeStruct};
 use crate::jikan_integration::common::structs::character::{AnimeCharactersResponse};
-use crate::jikan_integration::endpoints::anime::{get_anime_by_id, get_anime_characters};
+use crate::jikan_integration::endpoints::anime::{get_anime_by_id, get_anime_characters, search_anime};
 
 pub const ANIME_COLL_NAME: &str = "anime";
 
@@ -143,6 +144,33 @@ pub async fn get_by_id(
     }
     Ok(HttpResponse::Ok().json(result))
 }
+
+#[utoipa::path(
+    get,
+    path = "/api/anime",
+    tag = "Anime",
+    responses(
+        (status = 200, description = "Search anime",     body = AnimeSearchResponse),
+        (status = 429, description = "Rate limit reached"),
+        (status = 502, description = "Upstream error"),
+    )
+)]
+pub async fn get_anime_by_query(
+    config: web::Data<AppConfig>,
+    client: web::Data<Client>,
+    info: web::Query<AnimeSearchParams>,
+) -> Result<HttpResponse, ApiError> {
+    let collection: Collection<AnimeStruct> =
+        client.database(DB_NAME).collection(ANIME_COLL_NAME);
+
+    let result = search_anime(&config, info.q.clone()).await?;
+    if let Err(e) = collection.insert_many(&result.data).await {
+        log::error!("Failed to cache anime: {}", e);
+    }
+
+    Ok(HttpResponse::Ok().json(result))
+}
+
 
 #[utoipa::path(
     post,

@@ -23,6 +23,7 @@ use crate::{handlers, models, jikan_integration};
         handlers::anime_handler::get_random,
         handlers::anime_handler::get_by_id,
         handlers::anime_handler::get_characters,
+        handlers::anime_handler::get_anime_by_query,
     ),
     components(schemas(
         models::UserDTO,

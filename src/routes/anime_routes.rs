@@ -11,11 +11,16 @@ permission!(require_anime_create, "anime_create");
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/anime")
-            .service(web::resource("/").route(
-                web::post().wrap(from_fn(auth_middleware))
-                    .to(handlers::anime_handler::create_anime)
-                    .wrap(from_fn(require_anime_create)),
-            )
+            .service(web::resource("/")
+                .route(
+                    web::get()
+                        .to(handlers::anime_handler::get_anime_by_query),
+                )
+                .route(
+                    web::post().wrap(from_fn(auth_middleware))
+                        .to(handlers::anime_handler::create_anime)
+                        .wrap(from_fn(require_anime_create))
+                )
         ).service(
             web::resource("/random").route(
                 web::get()
