@@ -22,6 +22,16 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                         .wrap(from_fn(require_anime_create))
                 )
         ).service(
+            web::resource("/list").route(
+                web::get()
+                    .to(handlers::anime_handler::get_anime_list),
+            )
+        ).service(
+            web::resource("/search").route(
+                web::get()
+                    .to(handlers::anime_handler::search_anime_in_local_db),
+            )
+        ).service(
             web::resource("/random").route(
                 web::get()
                     .to(handlers::anime_handler::get_random),

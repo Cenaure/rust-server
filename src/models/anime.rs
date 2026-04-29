@@ -63,3 +63,33 @@ pub struct UpdateAnimeRequest {
 pub struct AnimeSearchParams {
     pub q: String,
 }
+
+#[derive(Deserialize, ToSchema)]
+pub struct AnimeListParams {
+    #[serde(default = "default_page")]
+    pub page: i32,
+    #[serde(default = "default_limit")]
+    pub limit: i32,
+    pub sort_by: Option<AnimeListSortBy>,
+    pub order: Option<SortOrder>,
+}
+
+#[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum AnimeListSortBy {
+    Score,
+    Rank,
+    Popularity,
+    Year,
+    Episodes,
+}
+
+#[derive(Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SortOrder {
+    Asc,
+    Desc,
+}
+
+fn default_page() -> i32 { 1 }
+fn default_limit() -> i32 { 24 }

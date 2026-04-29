@@ -68,3 +68,9 @@ impl error::ResponseError for ApiError {
             .json(ErrorBody { error: self.to_string() })
     }
 }
+
+impl From<mongodb::error::Error> for ApiError {
+    fn from(err: mongodb::error::Error) -> Self {
+        ApiError::InternalServer(err.to_string())
+    }
+}

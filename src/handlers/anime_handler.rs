@@ -3,16 +3,17 @@ use crate::jikan_integration::common::structs::random::AnimeRandomJikanResponse;
 use crate::jikan_integration::common::structs::top::AnimeTopJikanResponse;
 use crate::jikan_integration::endpoints::random::get_random_anime;
 use crate::jikan_integration::endpoints::top::get_top_anime;
-use crate::models::{AnimeSearchParams, CreateAnimeRequest, TopAnimeParams, UpdateAnimeRequest};
+use crate::models::{AnimeListParams, AnimeListSortBy, AnimeSearchParams, CreateAnimeRequest, SortOrder, TopAnimeParams, UpdateAnimeRequest};
 use crate::utils::app_config::AppConfig;
 use actix_web::{get, post, put, web, HttpResponse};
 use futures::TryStreamExt;
 use mongodb::{Client, Collection};
 use mongodb::bson::doc;
-use utoipa::openapi::Info;
+use mongodb::options::FindOptions;
 use crate::handlers::DB_NAME;
 use crate::jikan_integration::common::structs::anime::{AnimeByIdResponse, AnimeSearchResponse, AnimeStruct};
 use crate::jikan_integration::common::structs::character::{AnimeCharactersResponse};
+use crate::jikan_integration::common::structs::common::{Pagination, PaginationItems};
 use crate::jikan_integration::endpoints::anime::{get_anime_by_id, get_anime_characters, search_anime};
 
 pub const ANIME_COLL_NAME: &str = "anime";
@@ -169,6 +170,117 @@ pub async fn get_anime_by_query(
     }
 
     Ok(HttpResponse::Ok().json(result))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/anime/search",
+    tag = "Anime",
+    responses(
+        (status = 200, description = "Search anime",     body = AnimeSearchResponse),
+        (status = 429, description = "Rate limit reached"),
+        (status = 502, description = "Upstream error"),
+    )
+)]
+pub async fn search_anime_in_local_db(
+    config: web::Data<AppConfig>,
+    client: web::Data<Client>,
+    info: web::Query<AnimeSearchParams>,
+) -> Result<HttpResponse, ApiError> {
+    let collection: Collection<AnimeStruct> =
+        client.database(DB_NAME).collection(ANIME_COLL_NAME);
+
+    let regex = doc! {
+        "titles.english": {
+            "$regex": &info.q,
+            "$options": "i"
+        }
+    };
+
+    let mut cursor = collection.find(regex).await?;
+
+    let mut results: Vec<AnimeStruct> = Vec::new();
+    while let Some(doc) = cursor.try_next().await? {
+        results.push(doc);
+    }
+
+    Ok(HttpResponse::Ok().json(results))
+}
+
+
+// Fetch from local db
+#[utoipa::path(
+    get,
+    path = "/api/anime",
+    tag = "Anime",
+    params(
+        ("page" = Option<u64>, Query, description = "Page number (default: 1)"),
+        ("limit" = Option<u64>, Query, description = "Items per page (default: 25, max: 100)"),
+        ("sort_by" = Option<String>, Query, description = "Field to sort by: score, rank, popularity, year, episodes"),
+        ("order" = Option<String>, Query, description = "Sort order: asc, desc"),
+    ),
+    responses(
+        (status = 200, description = "List of anime", body = AnimeSearchResponse),
+        (status = 400, description = "Bad request"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+pub async fn get_anime_list(
+    client: web::Data<Client>,
+    info: web::Query<AnimeListParams>,
+) -> Result<HttpResponse, ApiError> {
+    let limit = info.limit.min(100);
+    let page = info.page.max(1);
+    let skip = (page - 1) * limit;
+
+    let sort_field = match info.sort_by.as_ref().unwrap_or(&AnimeListSortBy::Score) {
+        AnimeListSortBy::Score      => "score",
+        AnimeListSortBy::Rank       => "rank",
+        AnimeListSortBy::Popularity => "popularity",
+        AnimeListSortBy::Year       => "year",
+        AnimeListSortBy::Episodes   => "episodes",
+    };
+
+    let sort_dir: i32 = match info.order.as_ref().unwrap_or(&SortOrder::Desc) {
+        SortOrder::Asc  => 1,
+        SortOrder::Desc => -1,
+    };
+
+    let collection: Collection<AnimeStruct> =
+        client.database(DB_NAME).collection(ANIME_COLL_NAME);
+
+    let total = collection
+        .count_documents(doc! {})
+        .await?;
+
+    let find_options = FindOptions::builder()
+        .sort(doc! { sort_field: sort_dir })
+        .skip(skip as u64)
+        .limit(limit as i64)
+        .build();
+
+    let mut cursor = collection.find(doc! {}).with_options(find_options).await?;
+
+    let mut data: Vec<AnimeStruct> = Vec::new();
+    while let Some(doc) = cursor.try_next().await? {
+        data.push(doc);
+    }
+
+    let last_visible_page = (total as f64 / limit as f64).ceil() as i32;
+
+    Ok(HttpResponse::Ok().json(AnimeSearchResponse {
+        pagination: Pagination {
+            last_visible_page,
+            has_next_page: page < last_visible_page,
+            current_page: page,
+            items: PaginationItems {
+                count: data.len() as i32,
+                total: total as i32,
+                per_page: limit as i32,
+            },
+        },
+        data,
+    }))
 }
 
 
