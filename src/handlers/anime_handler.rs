@@ -106,7 +106,11 @@ pub async fn get_random(
 
     // DB is empty — fall back to Jikan and cache the result.
     let result = get_random_anime(config).await?;
-    if let Err(e) = collection.insert_one(&result.data).await {
+    let filter = doc! { "mal_id": result.data.mal_id };
+    let options = mongodb::options::ReplaceOptions::builder()
+        .upsert(true)
+        .build();
+    if let Err(e) = collection.replace_one(filter, &result.data).with_options(options).await {
         log::warn!("Failed to cache random anime: {}", e);
     }
     Ok(HttpResponse::Ok().json(result))
@@ -140,10 +144,55 @@ pub async fn get_by_id(
     }
 
     let result = get_anime_by_id(&config, id).await?;
-    if let Err(e) = collection.insert_one(&result.data).await {
+    let filter = doc! { "mal_id": id };
+    let options = mongodb::options::ReplaceOptions::builder()
+        .upsert(true)
+        .build();
+    if let Err(e) = collection.replace_one(filter, &result.data).with_options(options).await {
         log::error!("Failed to cache anime {}: {}", id, e);
     }
     Ok(HttpResponse::Ok().json(result))
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/anime/ids/{ids}",
+    tag = "Anime",
+    responses(
+        (status = 200, description = "Anime by ids", body = AnimeSearchResponse),
+        (status = 400, description = "Bad request"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+pub async fn get_anime_by_ids(
+    client: web::Data<Client>,
+    path: web::Path<String>,
+) -> Result<HttpResponse, ApiError> {
+    let ids_raw = path.into_inner();
+
+    let ids: Vec<u32> = ids_raw
+        .split(',')
+        .filter_map(|s| s.trim().parse::<u32>().ok())
+        .collect();
+
+    if ids.is_empty() {
+        return Err(ApiError::BadRequest("No valid ids provided".to_string()));
+    }
+
+    let collection: Collection<AnimeStruct> =
+        client.database(DB_NAME).collection(ANIME_COLL_NAME);
+
+    let mut cursor = collection
+        .find(doc! { "mal_id": { "$in": &ids } })
+        .await
+        .map_err(|e| ApiError::InternalServer(e.to_string()))?;
+
+    let mut data: Vec<AnimeStruct> = Vec::new();
+    while let Some(doc) = cursor.try_next().await? {
+        data.push(doc);
+    }
+
+    Ok(HttpResponse::Ok().json(serde_json::json!({ "data": data })))
 }
 
 #[utoipa::path(
@@ -165,9 +214,7 @@ pub async fn get_anime_by_query(
         client.database(DB_NAME).collection(ANIME_COLL_NAME);
 
     let result = search_anime(&config, info.q.clone()).await?;
-    if let Err(e) = collection.insert_many(&result.data).await {
-        log::error!("Failed to cache anime: {}", e);
-    }
+    cache_anime_list(&collection, &result.data).await;
 
     Ok(HttpResponse::Ok().json(result))
 }

@@ -27,6 +27,11 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                     .to(handlers::anime_handler::get_anime_list),
             )
         ).service(
+            web::resource("/ids/{ids}").route(
+                web::get()
+                    .to(handlers::anime_handler::get_anime_by_ids),
+            )
+        ).service(
             web::resource("/search").route(
                 web::get()
                     .to(handlers::anime_handler::search_anime_in_local_db),
