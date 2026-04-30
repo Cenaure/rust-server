@@ -11,6 +11,7 @@ use actix_web::web;
 use mongodb::bson::doc;
 use mongodb::bson::oid::ObjectId;
 use mongodb::{Client, Collection};
+use crate::handlers::groups_handler::get_groups_by_ids;
 
 pub async fn require_permissions(
     req: ServiceRequest,
@@ -51,8 +52,8 @@ pub async fn require_permissions(
         .map_err(|e| ApiError::InternalServer(e.to_string()))?
         .ok_or_else(|| ApiError::Unauthorized("User not found".to_string()))?;
 
-    let user_permissions: Vec<&str> = user
-        .groups
+    let user_groups = get_groups_by_ids(&client, &user.groups).await?;
+    let user_permissions: Vec<&str> = user_groups
         .iter()
         .flat_map(|g| g.permissions.iter().map(|p| p.as_str()))
         .collect();

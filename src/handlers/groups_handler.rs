@@ -64,6 +64,28 @@ pub async fn get_group(
     Ok(HttpResponse::Ok().json(group))
 }
 
+pub async fn get_groups_by_ids(
+    client: &Client,
+    ids: &[ObjectId],
+) -> Result<Vec<Group>, ApiError> {
+    let collection: Collection<Group> =
+        client.database(DB_NAME).collection(GROUPS_COLL_NAME);
+
+    let filter = doc! {
+        "_id": { "$in": ids }
+    };
+
+    let groups = collection
+        .find(filter)
+        .await
+        .map_err(|e| ApiError::InternalServer(e.to_string()))?
+        .try_collect()
+        .await
+        .map_err(|e| ApiError::InternalServer(e.to_string()))?;
+
+    Ok(groups)
+}
+
 #[utoipa::path(
     post,
     path = "/api/groups/",

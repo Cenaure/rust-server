@@ -7,6 +7,7 @@ use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{doc, to_bson, Document};
 use mongodb::options::ReturnDocument;
 use mongodb::{Client, Collection};
+use crate::handlers::groups_handler::get_groups_by_ids;
 
 pub const USERS_COLL_NAME: &str = "users";
 
@@ -19,10 +20,11 @@ pub const USERS_COLL_NAME: &str = "users";
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse,ApiError>  {
-    let collection: Collection<UserDTO> = client.database(DB_NAME).collection(USERS_COLL_NAME);
+pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse, ApiError> {
+    let collection: Collection<User> =
+        client.database(DB_NAME).collection(USERS_COLL_NAME);
 
-    let users: Vec<UserDTO> = collection
+    let users: Vec<User> = collection
         .find(doc! {})
         .await
         .map_err(|e| ApiError::InternalServer(e.to_string()))?
@@ -66,12 +68,14 @@ pub async fn add_user(client: web::Data<Client>, user_dto: web::Json<UserCreate>
         .as_object_id()
         .ok_or(ApiError::InternalServer("Failed to get inserted id".to_string()))?;
 
+    let groups = get_groups_by_ids(&client, &new_user.groups).await?;
+
     Ok(
         HttpResponse::Created().json(UserDTO {
             id: Some(inserted_id),
             username: new_user.username,
             email: new_user.email,
-            groups: new_user.groups,
+            groups,
             last_login: new_user.last_login,
         })
     )
@@ -91,7 +95,7 @@ pub async fn add_user(client: web::Data<Client>, user_dto: web::Json<UserCreate>
     )
 )]
 pub async fn get_user(path: web::Path<String>, client: web::Data<Client>) -> Result<HttpResponse,ApiError>  {
-    let collection: Collection<UserDTO> = client.database(DB_NAME).collection(USERS_COLL_NAME);
+    let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
 
     let user_id = ObjectId::parse_str(path.into_inner())
         .map_err(|_| ApiError::BadRequest("Invalid user ID".to_string()))?;
@@ -157,11 +161,13 @@ pub async fn patch_user(path: web::Path<String>, client: web::Data<Client>, user
         .map_err(|e| ApiError::InternalServer(e.to_string()))?
         .ok_or(ApiError::NotFound("User not found".to_string()))?;
 
+    let groups = get_groups_by_ids(&client, &updated.groups).await?;
+
     Ok(HttpResponse::Ok().json(UserDTO {
         id: updated.id,
         username: updated.username,
         email: updated.email,
-        groups: updated.groups,
+        groups,
         last_login: updated.last_login,
     }))
 }

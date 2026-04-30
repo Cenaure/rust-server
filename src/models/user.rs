@@ -11,7 +11,7 @@ pub struct User {
     pub username: String,
     pub email: String,
     pub password: String,
-    pub groups: Vec<Group>,
+    pub groups: Vec<ObjectId>,
     pub last_login: Option<DateTime>
 }
 
@@ -49,7 +49,8 @@ pub struct UserCreate {
     pub username: String,
     pub password: String,
     pub email: String,
-    pub groups: Option<Vec<Group>>,
+    #[schema(value_type = Option<Vec<String>>)]
+    pub groups: Option<Vec<ObjectId>>,
 }
 
 #[derive(Deserialize, ToSchema)]

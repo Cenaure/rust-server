@@ -9,6 +9,7 @@ use actix_web::{get, post, web, HttpResponse};
 use chrono::Utc;
 use mongodb::bson::{doc, DateTime};
 use mongodb::{Client, Collection};
+use crate::handlers::groups_handler::get_groups_by_ids;
 
 #[utoipa::path(
     post,
@@ -52,6 +53,8 @@ pub async fn sign_in(client: web::Data<Client>, config: web::Data<AppConfig>, si
         .await
         .map_err(|e| ApiError::InternalServer(e.to_string()))?;
 
+    let groups = get_groups_by_ids(&client, &user.groups).await?;
+
     Ok(HttpResponse::Ok()
         .cookie(
             Cookie::build("access_token", access_token)
@@ -61,7 +64,14 @@ pub async fn sign_in(client: web::Data<Client>, config: web::Data<AppConfig>, si
                 .path("/")
                 .max_age(actix_web::cookie::time::Duration::minutes(30))
                 .finish(),
-        ).finish()
+        )
+        .json(UserDTO {
+            id: None,
+            username: user.username,
+            email: user.email,
+            groups,
+            last_login: user.last_login,
+        })
     )
 }
 #[utoipa::path(
@@ -116,6 +126,8 @@ pub async fn sign_up(client: web::Data<Client>, config: web::Data<AppConfig>, si
     let access_token = encode_jwt(&new_user.username, &new_user.email, inserted_id, &config.jwt_secret)
         .map_err(|e| ApiError::InternalServer(e.to_string()))?;;
 
+    let groups = get_groups_by_ids(&client, &new_user.groups).await?;
+
     Ok(HttpResponse::Created()
         .cookie(
             Cookie::build("access_token", access_token)
@@ -130,7 +142,7 @@ pub async fn sign_up(client: web::Data<Client>, config: web::Data<AppConfig>, si
             id: None,
             username: new_user.username,
             email: new_user.email,
-            groups: new_user.groups,
+            groups,
             last_login: new_user.last_login,
         })
     )
