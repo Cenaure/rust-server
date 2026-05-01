@@ -62,7 +62,7 @@ pub async fn sign_in(client: web::Data<Client>, config: web::Data<AppConfig>, si
                 .secure(true)
                 .same_site(SameSite::Strict)
                 .path("/")
-                .max_age(actix_web::cookie::time::Duration::minutes(30))
+                .max_age(actix_web::cookie::time::Duration::minutes(15))
                 .finish(),
         )
         .json(UserDTO {
@@ -135,7 +135,7 @@ pub async fn sign_up(client: web::Data<Client>, config: web::Data<AppConfig>, si
                 .secure(true)
                 .same_site(SameSite::Strict)
                 .path("/")
-                .max_age(actix_web::cookie::time::Duration::minutes(30))
+                .max_age(actix_web::cookie::time::Duration::minutes(15))
                 .finish(),
         )
         .json(UserDTO {

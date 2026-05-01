@@ -1,6 +1,8 @@
 use mongodb::bson::oid::ObjectId;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
+use crate::models::common::SortOrder;
+use crate::models::UserSortBy;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 #[derive(Clone)]
@@ -31,4 +33,21 @@ pub struct GroupCreate {
 pub struct GroupUpdate {
     pub name: Option<String>,
     pub permissions: Option<Vec<String>>,
+}
+
+
+// query
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct GroupListParams {
+    pub page: Option<u64>,
+    pub limit: Option<u64>,
+    pub name: Option<String>,
+    pub sort_by: Option<GroupSortBy>,
+    pub order: Option<SortOrder>,
+}
+
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum GroupSortBy {
+    Name
 }

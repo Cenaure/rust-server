@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 use crate::jikan_integration::common::structs::anime::{AnimeTitles, AnimeTrailer};
 use crate::jikan_integration::common::structs::common::{CommonMalResponse, Images};
+use crate::models::common::SortOrder;
 
 #[derive(Deserialize, IntoParams, ToSchema)]
 pub struct TopAnimeParams {
@@ -84,12 +85,7 @@ pub enum AnimeListSortBy {
     Episodes,
 }
 
-#[derive(Deserialize, ToSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum SortOrder {
-    Asc,
-    Desc,
-}
+
 
 fn default_page() -> i32 { 1 }
 fn default_limit() -> i32 { 24 }

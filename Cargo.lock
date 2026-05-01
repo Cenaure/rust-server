@@ -2329,6 +2329,7 @@ dependencies = [
  "serde",
  "serde_json",
  "time",
+ "tracing",
  "utoipa",
  "utoipa-actix-web",
  "utoipa-swagger-ui",

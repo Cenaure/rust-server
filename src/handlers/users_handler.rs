@@ -1,13 +1,14 @@
 use crate::errors::ApiError;
 use crate::handlers::DB_NAME;
-use crate::models::{User, UserCreate, UserDTO, UserUpdate};
+use crate::models::{User, UserCreate, UserDTO, UserListParams, UserSortBy, UserUpdate};
 use actix_web::{web, HttpResponse};
 use futures::TryStreamExt;
 use mongodb::bson::oid::ObjectId;
-use mongodb::bson::{doc, to_bson, Document};
-use mongodb::options::ReturnDocument;
+use mongodb::bson::{doc, Document};
+use mongodb::options::{FindOptions, ReturnDocument};
 use mongodb::{Client, Collection};
 use crate::handlers::groups_handler::get_groups_by_ids;
+use crate::models::common::SortOrder;
 
 pub const USERS_COLL_NAME: &str = "users";
 
@@ -15,24 +16,64 @@ pub const USERS_COLL_NAME: &str = "users";
     get,
     path = "/api/users/",
     tag = "Users",
+    params(UserListParams),
     responses(
-        (status = 200, description = "List users", body = [UserDTO]),
+        (status = 200, description = "List users"),
         (status = 500, description = "Internal server error")
     )
 )]
-pub async fn list_users(client: web::Data<Client>) -> Result<HttpResponse, ApiError> {
-    let collection: Collection<User> =
-        client.database(DB_NAME).collection(USERS_COLL_NAME);
+pub async fn list_users(
+    client: web::Data<Client>,
+    info: web::Query<UserListParams>,
+) -> Result<HttpResponse, ApiError> {
+    let collection: Collection<User> = client.database(DB_NAME).collection(USERS_COLL_NAME);
+
+    let per_page = info.limit.unwrap_or(10) as i64;
+    let current_page = info.page.unwrap_or(1) as i64;
+    let skip = ((current_page - 1) * per_page) as u64;
+
+    let filter = build_filter(&info);
+
+    let sort_doc = build_sort(&info);
+
+    let total_count = collection
+        .count_documents(filter.clone())
+        .await
+        .map_err(|e| ApiError::InternalServer(e.to_string()))? as i64;
+
+    let find_options = FindOptions::builder()
+        .limit(per_page)
+        .skip(skip)
+        .sort(sort_doc)
+        .build();
 
     let users: Vec<User> = collection
-        .find(doc! {})
+        .find(filter)
+        .with_options(find_options)
         .await
         .map_err(|e| ApiError::InternalServer(e.to_string()))?
         .try_collect()
         .await
         .map_err(|e| ApiError::InternalServer(e.to_string()))?;
 
-    Ok(HttpResponse::Ok().json(users))
+    let last_visible_page = (total_count as f64 / per_page as f64).ceil() as i64;
+    let has_next_page = current_page < last_visible_page;
+
+    let response = serde_json::json!({
+        "pagination": {
+            "last_visible_page": last_visible_page,
+            "has_next_page": has_next_page,
+            "current_page": current_page,
+            "items": {
+                "count": users.len(),
+                "total": total_count,
+                "per_page": per_page,
+            }
+        },
+        "data": users
+    });
+
+    Ok(HttpResponse::Ok().json(response))
 }
 
 #[utoipa::path(
@@ -141,10 +182,7 @@ pub async fn patch_user(path: web::Path<String>, client: web::Data<Client>, user
         set_doc.insert("email", email);
     }
     if let Some(groups) = &user_dto.groups {
-        set_doc.insert(
-            "groups",
-            to_bson(groups).map_err(|e| ApiError::InternalServer(e.to_string()))?,
-        );
+        set_doc.insert("groups", groups);
     }
 
     if set_doc.is_empty() {
@@ -201,4 +239,41 @@ pub async fn delete_user(path: web::Path<String>, client: web::Data<Client>) -> 
     }
 
     Ok(HttpResponse::NoContent().finish())
+}
+
+
+//
+
+fn build_filter(params: &UserListParams) -> Document {
+    let mut filter = doc! {};
+
+    if let Some(ref email) = params.email {
+        if !email.trim().is_empty() {
+            filter.insert(
+                "email",
+                doc! {
+                    "$regex": email.trim(),
+                    "$options": "i"   // case-insensitive
+                },
+            );
+        }
+    }
+
+    filter
+}
+
+fn build_sort(params: &UserListParams) -> Document {
+    let direction: i32 = match params.order {
+        Some(SortOrder::Desc) => -1,
+        _ => 1,
+    };
+
+    let field = match params.sort_by {
+        Some(UserSortBy::Email) => "email",
+        Some(UserSortBy::LastLogin) => "last_login",
+        Some(UserSortBy::Username) => "username",
+        None => "_id",
+    };
+
+    doc! { field: direction }
 }

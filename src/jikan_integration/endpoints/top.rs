@@ -40,10 +40,19 @@ pub async fn get_top_anime(
         .await
         .map_err(|e| ApiError::BadGateway(format!("Jikan request failed: {e}")))?;
 
+
     match response.status() {
         StatusCode::OK => {
-            response.json::<AnimeTopJikanResponse>().await
-                .map_err(|e| ApiError::InternalServer(format!("Failed to parse response: {e}")))
+            let raw = response.text().await
+                .map_err(|e| ApiError::BadGateway(format!("Failed to read body: {e}")))?;
+
+            tracing::debug!("Jikan raw response: {raw}");
+
+            serde_json::from_str::<AnimeTopJikanResponse>(&raw)
+                .map_err(|e| {
+                    tracing::error!("Parse error: {e}\nBody: {raw}");
+                    ApiError::InternalServer(format!("Failed to parse response: {e}"))
+                })
         }
         StatusCode::TOO_MANY_REQUESTS => Err(ApiError::TooManyRequests("Jikan rate limit hit".to_string())),
         other => Err(ApiError::BadGateway(format!("Jikan returned {other}"))),

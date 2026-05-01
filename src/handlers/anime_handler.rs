@@ -3,10 +3,11 @@ use crate::jikan_integration::common::structs::random::AnimeRandomJikanResponse;
 use crate::jikan_integration::common::structs::top::AnimeTopJikanResponse;
 use crate::jikan_integration::endpoints::random::get_random_anime;
 use crate::jikan_integration::endpoints::top::get_top_anime;
-use crate::models::{AnimeListParams, AnimeListSortBy, AnimeSearchParams, CreateAnimeRequest, SortOrder, TopAnimeParams, UpdateAnimeRequest};
+use crate::models::{AnimeListParams, AnimeListSortBy, AnimeSearchParams, CreateAnimeRequest, TopAnimeParams, UpdateAnimeRequest};
 use crate::utils::app_config::AppConfig;
 use actix_web::{get, post, put, web, HttpResponse};
 use futures::TryStreamExt;
+use log::info;
 use mongodb::{Client, Collection};
 use mongodb::bson::doc;
 use mongodb::options::FindOptions;
@@ -15,6 +16,7 @@ use crate::jikan_integration::common::structs::anime::{AnimeByIdResponse, AnimeS
 use crate::jikan_integration::common::structs::character::{AnimeCharactersResponse};
 use crate::jikan_integration::common::structs::common::{Pagination, PaginationItems};
 use crate::jikan_integration::endpoints::anime::{get_anime_by_id, get_anime_characters, search_anime};
+use crate::models::common::SortOrder;
 
 pub const ANIME_COLL_NAME: &str = "anime";
 
