@@ -12,6 +12,7 @@ mod errors;
 mod handlers;
 mod models;
 mod routes;
+mod services;
 mod utils;
 pub mod jikan_integration;
 mod openapi;
@@ -67,7 +68,9 @@ async fn main() -> std::io::Result<()> {
                     .configure(routes::users_routes::config)
                     .configure(routes::groups_routes::config)
                     .configure(routes::auth_routes::config)
-                    .configure(routes::anime_routes::config))
+                    .configure(routes::anime_routes::config)
+                    .configure(routes::anime_characters_routes::config)
+                    .configure(routes::anime_producers_routes::config))
             .wrap(logger)
         })
         .bind(("127.0.0.1", port))?

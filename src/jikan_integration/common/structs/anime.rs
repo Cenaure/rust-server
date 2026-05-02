@@ -2,45 +2,38 @@ use crate::jikan_integration::common::structs::common::{CommonMalResponse, Image
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-// Anime Struct only needed fields
 #[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
 pub struct AnimeStruct {
     pub mal_id: u32,
     pub url: Option<String>,
     pub images: Option<Images>,
     pub trailer: Option<AnimeTrailer>,
-    //pub approved
     pub titles: Option<Vec<AnimeTitles>>,
     pub r#type: Option<String>,
-    //pub source
     pub episodes: Option<u32>,
     pub status: Option<String>,
     pub airing: Option<bool>,
-    //pub aired
-    //pub duration
     pub rating: Option<String>,
-
-    // Score related
     pub score: Option<f32>,
     pub scored_by: Option<u32>,
     pub rank: Option<u32>,
     pub popularity: Option<u32>,
-
-    //pub members
-    //pub favourites
-
     pub synopsis: Option<String>,
     pub background: Option<String>,
-    //pub season
     pub year: Option<u16>,
-    //pub broadcast
-    pub producers: Option<Vec<CommonMalResponse>>,
-    //pub licensors
+
+    #[serde(rename = "producer_ids", default)]
+    pub producers: Option<Vec<u32>>,
+
     pub studios: Option<Vec<CommonMalResponse>>,
     pub genres: Option<Vec<CommonMalResponse>>,
-    //pub explicit genres
-    //pub themes
-    //pub demographics
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
+pub struct AnimePopulated {
+    #[serde(flatten)]
+    pub anime: AnimeStruct,
+    pub producers: Vec<CommonMalResponse>,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
@@ -58,11 +51,11 @@ pub struct AnimeTitles {
 
 #[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
 pub struct AnimeByIdResponse {
-    pub data: AnimeStruct,
+    pub data: AnimePopulated,
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct AnimeSearchResponse {
     pub pagination: Pagination,
-    pub data: Vec<AnimeStruct>,
+    pub data: Vec<AnimePopulated>,
 }

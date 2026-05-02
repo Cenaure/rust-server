@@ -34,7 +34,7 @@ pub struct CreateAnimeRequest {
     pub synopsis: Option<String>,
     pub background: Option<String>,
     pub year: Option<u16>,
-    pub producers: Option<Vec<CommonMalResponse>>,
+    pub producer_ids: Option<Vec<u32>>,
     pub studios: Option<Vec<CommonMalResponse>>,
     pub genres: Option<Vec<CommonMalResponse>>,
 }
@@ -84,8 +84,6 @@ pub enum AnimeListSortBy {
     Year,
     Episodes,
 }
-
-
 
 fn default_page() -> i32 { 1 }
 fn default_limit() -> i32 { 24 }

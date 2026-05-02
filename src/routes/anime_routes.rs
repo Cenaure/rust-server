@@ -57,12 +57,6 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                         .to(handlers::anime_handler::update_anime)
                         .wrap(from_fn(require_anime_create)),
                 )
-        ).service(
-            web::resource("{id}/characters")
-                .route(
-                    web::get()
-                        .to(handlers::anime_handler::get_characters)
-                )
         )
     );
 }

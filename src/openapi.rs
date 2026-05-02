@@ -1,3 +1,4 @@
+use crate::handlers::anime_characters_handler::__path_get_characters;
 use utoipa::OpenApi;
 use crate::{handlers, models, jikan_integration};
 
@@ -22,8 +23,8 @@ use crate::{handlers, models, jikan_integration};
         handlers::anime_handler::get_top,
         handlers::anime_handler::get_random,
         handlers::anime_handler::get_by_id,
-        handlers::anime_handler::get_characters,
         handlers::anime_handler::get_anime_by_query,
+        handlers::anime_characters_handler::get_characters,
     ),
     components(schemas(
         models::UserDTO,

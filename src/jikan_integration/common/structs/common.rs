@@ -22,6 +22,7 @@ pub struct PaginationItems {
 #[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
 pub struct CommonMalResponse {
     pub mal_id: u32,
+    #[serde(default)]
     pub r#type: String,
     pub name: String,
     pub url: String
