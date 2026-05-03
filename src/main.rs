@@ -43,6 +43,8 @@ async fn main() -> std::io::Result<()> {
     let client = Client::with_uri_str(config.database_url.clone()).await.expect("Failed connecting to database");
 
     let port = 8080;
+    //TODO
+    let ip = "0.0.0.0";
 
     info!("Server starting on port {port}");
 
@@ -73,7 +75,7 @@ async fn main() -> std::io::Result<()> {
                     .configure(routes::anime_producers_routes::config))
             .wrap(logger)
         })
-        .bind(("127.0.0.1", port))?
+        .bind((ip, port))?
         .run()
         .await
 }
