@@ -26,5 +26,18 @@ cp .env.example .env
 cargo run
 ```
 
+### Docker
+```bash
+cp .env.example .env
+docker build -t rust-server .
+docker run --rm -p 8080:8080 --env-file .env rust-server
+```
+
+### Docker Compose
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
 ### Environment Variables
 See [.env.example](https://github.com/Cenaure/rust-server/blob/main/.env.example)
