@@ -60,7 +60,7 @@ pub async fn sign_in(client: web::Data<Client>, config: web::Data<AppConfig>, si
             Cookie::build("access_token", access_token)
                 .http_only(true)
                 .secure(true)
-                .same_site(SameSite::Strict)
+                .same_site(SameSite::Lax)
                 .path("/")
                 .max_age(actix_web::cookie::time::Duration::minutes(15))
                 .finish(),
@@ -133,7 +133,7 @@ pub async fn sign_up(client: web::Data<Client>, config: web::Data<AppConfig>, si
             Cookie::build("access_token", access_token)
                 .http_only(true)
                 .secure(true)
-                .same_site(SameSite::Strict)
+                .same_site(SameSite::Lax)
                 .path("/")
                 .max_age(actix_web::cookie::time::Duration::minutes(15))
                 .finish(),
