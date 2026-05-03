@@ -52,7 +52,8 @@ async fn main() -> std::io::Result<()> {
         let logger = Logger::default();
 
         let cors = Cors::default()
-            .allow_any_origin()
+            .allowed_origin("http://localhost:4200")
+            .allowed_origin("https://anidream.vercel.app/")
             .allowed_methods(vec!["GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"])
             .allow_any_header()
             .supports_credentials();
