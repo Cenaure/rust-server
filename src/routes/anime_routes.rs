@@ -7,6 +7,7 @@ use actix_web::middleware::{from_fn, Next};
 use actix_web::web;
 
 permission!(require_anime_create, "anime_create");
+permission!(require_anime_delete, "anime_delete");
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -51,6 +52,11 @@ pub fn config(cfg: &mut web::ServiceConfig) {
                 .route(
                     web::get()
                         .to(handlers::anime_handler::get_by_id),
+                )
+                .route(
+                    web::delete().wrap(from_fn(auth_middleware))
+                        .to(handlers::anime_handler::delete_anime)
+                        .wrap(from_fn(require_anime_delete)),
                 )
                 .route(
                     web::put().wrap(from_fn(auth_middleware))

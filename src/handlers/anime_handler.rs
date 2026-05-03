@@ -194,4 +194,22 @@ pub async fn update_anime(
     Ok(HttpResponse::Ok().json(result))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/api/anime/{id}",
+    tag = "Anime",
+    responses(
+        (status = 200, description = "Anime deleted"),
+        (status = 404, description = "Anime not found"),
+        (status = 500, description = "Internal server error"),
+    )
+)]
+pub async fn delete_anime(
+    client: web::Data<Client>,
+    path: web::Path<i32>,
+) -> Result<HttpResponse, ApiError> {
+    let result = anime_service::delete_anime_service(client.get_ref(), path.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(result))
+}
+
 //Characters

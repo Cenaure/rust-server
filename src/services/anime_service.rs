@@ -16,6 +16,7 @@ use futures::TryStreamExt;
 use mongodb::bson::{doc, Document};
 use mongodb::options::FindOptions;
 use mongodb::{Client, Collection};
+use serde_json::Value::Null;
 use crate::models::producer::ProducerDTO;
 use crate::services::producers_service;
 use crate::services::producers_service::{cache_producers, PRODUCERS_COLL_NAME};
@@ -228,6 +229,8 @@ pub async fn get_anime_list_service(
     let page = info.page.max(1);
     let skip = (page - 1) * limit;
 
+    let filter = build_filter(&info);
+
     let sort_field = match info.sort_by.as_ref().unwrap_or(&AnimeListSortBy::Score) {
         AnimeListSortBy::Score => "score",
         AnimeListSortBy::Rank => "rank",
@@ -245,10 +248,11 @@ pub async fn get_anime_list_service(
     let total = client
         .database(DB_NAME)
         .collection::<AnimeStruct>(ANIME_COLL_NAME)
-        .count_documents(doc! {})
+        .count_documents(filter.clone()) // <-- pass filter here
         .await?;
 
     let pipeline = vec![
+        doc! { "$match": filter },
         doc! { "$sort": { sort_field: sort_dir } },
         doc! { "$skip": skip as i64 },
         doc! { "$limit": limit as i64 },
@@ -314,7 +318,7 @@ pub async fn create_anime_service(
         mal_id: body.mal_id,
         url: body.url,
         images: body.images,
-        trailer: body.trailer,
+        trailer: None,
         titles: body.titles,
         r#type: body.r#type,
         episodes: body.episodes,
@@ -322,11 +326,11 @@ pub async fn create_anime_service(
         airing: body.airing,
         rating: body.rating,
         score: body.score,
-        scored_by: body.scored_by,
+        scored_by: None,
         rank: body.rank,
         popularity: body.popularity,
         synopsis: body.synopsis,
-        background: body.background,
+        background: None,
         year: body.year,
         producers: body.producer_ids,
         studios: body.studios,
@@ -366,15 +370,15 @@ pub async fn update_anime_service(
     set_if_some!(body.airing, "airing");
     set_if_some!(body.rating, "rating");
     set_if_some!(body.score, "score");
-    set_if_some!(body.scored_by, "scored_by");
+    // set_if_some!(body.scored_by, "scored_by");
     set_if_some!(body.rank, "rank");
     set_if_some!(body.popularity, "popularity");
     set_if_some!(body.synopsis, "synopsis");
-    set_if_some!(body.background, "background");
+    // set_if_some!(body.background, "background");
     set_if_some!(body.year, "year");
     set_if_some!(body.genres, "genres");
     set_if_some!(body.studios, "studios");
-    set_if_some!(body.producers, "producer_ids");
+    set_if_some!(body.producer_ids, "producer_ids");
 
     if set_doc.is_empty() {
         return Err(ApiError::BadRequest("No fields to update".into()));
@@ -392,6 +396,32 @@ pub async fn update_anime_service(
     }
 }
 
+pub async fn delete_anime_service(
+    client: &Client,
+    id: i32,
+) -> Result<serde_json::Value, ApiError> {
+    let coll = collection(client);
+
+    let result = coll
+        .find_one_and_delete(doc! { "mal_id": id })
+        .await
+        .map_err(|e| ApiError::InternalServer(e.to_string()))?;
+
+    match result {
+        Some(_) => Ok(serde_json::json!({ "message": format!("Anime with id {} deleted", id) })),
+        None => Err(ApiError::NotFound(format!("Anime with id {} not found", id))),
+    }
+}
+
 pub async fn get_characters_service(config: web::Data<AppConfig>, id: i32) -> Result<AnimeCharactersResponse, ApiError> {
     get_anime_characters(&config, id).await
+}
+
+// helper
+fn build_filter(params: &AnimeListParams) -> Document {
+    let mut filter = doc! {};
+    if let Some(query) = &params.query {
+        filter.insert("titles.title", doc! { "$regex": query, "$options": "i" });
+    }
+    filter
 }
