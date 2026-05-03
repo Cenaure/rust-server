@@ -50,7 +50,7 @@ async fn main() -> std::io::Result<()> {
         let logger = Logger::default();
 
         let cors = Cors::default()
-            .allowed_origin("http://localhost:4200")
+            .allow_any_origin()
             .allowed_methods(vec!["GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"])
             .allow_any_header()
             .supports_credentials();
